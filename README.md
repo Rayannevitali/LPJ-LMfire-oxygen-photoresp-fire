@@ -35,7 +35,52 @@ This version is derived from the `oxygen` branch of [ARVE-Research/LPJ-LMfire](h
 
 > **Note:** Large HPC outputs are **not included**.
 
+---
 
+## Input data
+
+This repository does **not include input data** used to run the model.  
+
+An overview of the input datasets, including forcing files and parameter values, is provided in **Table S1** of the manuscript:  
+*"Combined effects of photorespiration and fire strongly regulate atmospheric oxygen levels"* (Science Advances, in review).  
+
+For reproducibility, the repository includes example joboptions and scripts (`joboptions/`, `load_lpj_env_sophia.sh`) that show how input data were used.  
+
+> **Note:** To obtain the actual input datasets, please contact the corresponding author: rvitali@envs.au.dk
+
+---
+
+## How to run / reproduce output
+
+To reproduce model simulations, the following steps should be followed:
+
+1. **Obtain input data**  
+   - All input datasets required to run the model are not included in this repository.  
+   - An overview of inputs is provided in **Table S1** of the manuscript.  
+
+2. **Set model parameters**  
+   - In `src/parametersmod.f90`, set the parameters required for a given run.  
+     - For example, set `O2` for the desired oxygen concentration.  
+     - Use switches `HoC`, `PoI`, `MoE` to turn on/off O₂ dependence for **heat of combustion**, **probability of ignition**, and **moisture of extinction**.
+     - Use switch `O2_photo` to turn on/off O₂ dependence for **photosynthesis**.
+   - These settings can alternatively be incorporated into **namelist files** (`joboptions/`) for convenience.  
+
+3. **Load relevant modules and compile the model**  
+   - Compilation has been tested on HPC systems including **ISCA (University of Exeter)** and **Sophia (DTU)**.  
+   - Ensure all required Fortran and MPI modules are loaded for your system.  
+
+4. **Edit the namelist for the run**  
+   - `joboptions/standard.namelist` provides a default configuration including paths and run requirements.  
+   - For manuscript simulations:  
+     - Spin-up for 1500 years  
+     - Last 10 years of output used for analysis  
+
+5. **Edit run scripts**  
+   - Update paths and settings in `run.sh` or HPC-specific scripts (`run_sophia.sh`) as appropriate.  
+   - Submit the job to run on your system.  
+
+> **Note:** Scripts and namelists in this repository are configured as examples; users must ensure paths, modules, and HPC settings match their environment.
+> 
 ---
 
 ## Citation
