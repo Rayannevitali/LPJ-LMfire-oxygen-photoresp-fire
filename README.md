@@ -2,7 +2,9 @@
 
 This repository contains the version of the LPJ-LMfire Dynamic Global Vegetation Model used in the manuscript:
 
-**"Combined effects of photorespiration and fire strongly regulate atmospheric oxygen levels"** — Rayanne Vitali*, Claire M. Belcher, Benjamin J.W. Mills, Andrew J. Watson, *Science Advances* (in review)
+**"Combined effects of photorespiration and fire strongly regulate atmospheric oxygen levels"** 
+
+Rayanne Vitali*, Claire M. Belcher, Benjamin J.W. Mills, Andrew J. Watson, *Science Advances* (in review)
 
 ---
 
