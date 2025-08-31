@@ -4,11 +4,11 @@
  dotransient      = .false.
  spinupyears      = 1500 !36 30-year cycles
  Transientyears   = 140  
- cfile_spinup     = '/work/users/rayvit/LPJ_input/standard_inputs/climatefile_classic.nc'
- cfile_transient  = '/work/users/rayvit/LPJ_input/standard_inputs/climatefile.nc'
- soilfile         = '/work/users/rayvit/LPJ_input/standard_inputs/soil30m.nc'
- co2file          = '/work/users/rayvit/LPJ_input/standard_inputs/ghg2.nc'
- topofile         = '/work/users/rayvit/LPJ_input/standard_inputs/topofile_integrated_000ka.nc'
+ cfile_spinup     = '/path/to/climatefile_classic.nc'
+ cfile_transient  = '/path/to/climatefile.nc'
+ soilfile         = '/path/to/soil30m.nc'
+ co2file          = '/path/to/ghg2.nc'
+ topofile         = '/path/to/topofile_integrated_000ka.nc'
  nspinyrsout      = 10 
  maxmem           = 12288.
  lu_turn_yrs      = 0.
