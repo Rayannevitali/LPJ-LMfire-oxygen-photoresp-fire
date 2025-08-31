@@ -20,13 +20,21 @@ This version is derived from the `oxygen` branch of [ARVE-Research/LPJ-LMfire](h
 
 ## Repository contents
 
-- `src/` – Model source code  
-- `joboptions/` – Example input configurations  
-- `share/` – Shared parameter files  
-- `outvarsinfo.namelist` – Output variable definitions  
-- `README.md` – This documentation  
+| File / Directory              | Description |
+|-------------------------------|-------------|
+| `src/`                        | Model source code, including Fortran modules and main routines for LPJ-LMfire. |
+| `joboptions/`                  | Example input configurations (`.namelist` files) for different simulation setups. |
+| `share/`                       | Shared parameter files, e.g., `pftpars_global.csv`. |
+| `.gitignore`                   | Git ignore file for excluding temporary or output files. |
+| `LICENSE`                      | License for the repository (same as upstream LPJ-LMfire). |
+| `load_lpj_env_sophia.sh`      | Script to load LPJ environment modules on HPC (DTU, Sophia). |
+| `outvarsinfo.namelist`         | Definitions of output variables. |
+| `pftpars_global.csv`           | Global plant functional type parameters. |
+| `run.sh`                       | Example run script for HPC/local execution. |
+| `run_sophia.sh`                | HPC-specific run script for Sophia (DTU). |
 
 > **Note:** Large HPC outputs are **not included**.
+
 
 ---
 
