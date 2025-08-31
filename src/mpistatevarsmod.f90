@@ -174,8 +174,14 @@ type subgrid
   
   !monthly burned fraction of gridcell area
   real(sp), dimension(12) :: mburnedf
-  integer, dimension(12) :: mnfire
-  real(sp), dimension(12) :: mieff
+  integer, dimension(12) :: mnfire     ! monthly number of fires in gridcell
+  real(sp), dimension(12) :: mieff     ! monthly average ignition efficiency of gridcell
+  real(sp), dimension(12) :: mhofc     ! monthly average heat of combustion of gridcell
+  real(sp), dimension(12) :: mmofe     ! monthly average moisture of extinction 
+  real(sp), dimension(12) :: mfuelmoist !mothly weighted average fuel moisture of gridcell
+  real(sp), dimension(12) :: mIR       ! monthly reaction intensity
+  real(sp), dimension(12) :: mROS      ! monthly rate of spread
+
   
   !state of the soil, 
   type(soildata) :: soil

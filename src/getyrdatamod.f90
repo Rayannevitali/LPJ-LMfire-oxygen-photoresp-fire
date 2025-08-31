@@ -324,13 +324,14 @@ do y = 1,cnty
     ibuf(x,y)%wind = input_sp(x,y,t0:t1,6)
     ibuf(x,y)%lght = input_sp(x,y,t0:t1,7)
     
+
     if (any(input_sp(x,y,t0:t1,:) == rmissing) .or. soil(x,y)%sand(1) < 0. .or. soil(x,y)%landf <= 0.) then
       cellmask(x,y) = .false.
     else
       cellmask(x,y) = .true.
     end if
 
-!     write(stdout,*)x,y,soil(x,y)%landf,cellmask(x,y)
+    ! write(stdout,*)x,y,soil(x,y)%landf,cellmask(x,y)
     
     !if (ibuf(x,y)%temp(1) /= rmissing .and. soil(x,y)%sand(1) >= 0. .and. soil(x,y)%landf > 0.) cellmask(x,y) = .true.  
     
@@ -631,7 +632,7 @@ if (ncstat /= nf90_noerr) call netcdf_err(ncstat)
 
 soil%landf = rvals
 
-!write(stdout,*) 'end of gettopo'
+!write(stdout,*) 'soil(100,200)%landf', soil(100,200)%landf
 
 end subroutine gettopo
 

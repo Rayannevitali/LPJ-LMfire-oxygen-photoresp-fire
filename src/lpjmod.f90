@@ -46,6 +46,7 @@ implicit none
 
 type(inputdata), intent(in)    :: in
 type(statevars), target, intent(inout) :: osv  !state variables sent back out with MPI
+!integer, intent(in) :: cell
 
 integer :: ntiles
 logical :: spinup
@@ -289,6 +290,11 @@ real(sp), pointer, dimension(:,:) :: mLAI
 real(sp), pointer, dimension(:) :: mburnedf    !monthly burned area fraction of gridcell
 integer, pointer, dimension(:)  :: mnfire      !monthly number of fires
 real(sp), pointer, dimension(:) :: mieff       !monthly average ignition efficieny
+real(sp), pointer, dimension(:) :: mhofc       !monthly average heat of combustion
+real(sp), pointer, dimension(:) :: mmofe       !monthly average moisture of extinction
+real(sp), pointer, dimension(:) :: mfuelmoist  !monthly weighted average fuel moisture
+real(sp), pointer, dimension(:) :: mIR         !monthly reaction intensity
+real(sp), pointer, dimension(:) :: mROS        !monthly average forward rate of spread
 integer, dimension(12) :: nosnowdays           !number of days in a month with temp > 0. without snowcover
 
 !additional local variables
@@ -314,10 +320,19 @@ real(sp), dimension(npft)  :: BBpft  !biomass burned from each PFT, sum of live 
 real(sp) :: Ab	!area burned, ha per day
 integer :: numfires_nat !number of natural fires per day
 real (sp) :: ieff !ignition efficiency per day
+real(sp) :: hofc  !heat of combustion
+real(sp) :: mofe  !moisture of extinction
+real(sp) :: IR    ! Reaction intensity 
+real(sp) :: ROSfsurface !forward rate of  spread
 
 real(sp), allocatable, dimension(:,:) :: help_me
 integer,  allocatable, dimension(:,:) :: help_me2
 real(sp), allocatable, dimension(:,:) :: help_me3
+real(sp), allocatable, dimension(:,:) :: help_me4
+real(sp), allocatable, dimension(:,:) :: help_me5
+real(sp), allocatable, dimension(:,:) :: help_me6
+real(sp), allocatable, dimension(:,:) :: help_me7
+real(sp), allocatable, dimension(:,:) :: help_me8
 
 integer :: startyr_foragers
 
@@ -568,6 +583,7 @@ call climate20(temp,dtemps,gdd,mtemp_min_buf,gdd_buf,mtemp_min20,gdd20,mtemp_max
 
 call bioclim(mtemp_min20,gdd,mtemp_max,survive,estab_lim)
 
+
 !--------------------------------------------------------------------------------------
 if (lucc) then
 
@@ -645,6 +661,11 @@ do i = 1,3 !ntiles
   mburnedf         => osv%tile(i)%mburnedf
   mnfire           => osv%tile(i)%mnfire
   mieff            => osv%tile(i)%mieff
+  mhofc            => osv%tile(i)%mhofc
+  mmofe            => osv%tile(i)%mmofe
+  mfuelmoist       => osv%tile(i)%mfuelmoist
+  mIR              => osv%tile(i)%mIR
+  mROS             => osv%tile(i)%mROS
 
   !--------------------------------------------------------------------------------------
   !initializations (needed?)
@@ -655,6 +676,8 @@ do i = 1,3 !ntiles
   mburnedf = 0.
   mnfire = 0.
   mieff = 0.
+  mhofc = 0.
+  mmofe = 0.
   
   !set up soil parameters
   
@@ -876,7 +899,6 @@ do i = 1,3 !ntiles
   !write(stdout,*)
 
   call killplant(bm_inc,present,pft%tree,lm_ind,rm_ind,hm_ind,sm_ind,nind,litter_ag_fast,litter_ag_slow,litter_bg)
-  
 !  if(i==2)   write(stdout,'(a,i3,9f14.4)') 'after killplant',i, litter_ag_fast(:,1) 
 
   !allocation of annual carbon increment to leaf, stem and fine root compartments
@@ -1055,29 +1077,51 @@ do i = 1,3 !ntiles
         mBBpft(:,m) = 0.
         mnfire(m)   = 0.
         mieff(m)    = 0.
+        mhofc(m)    = 0.
+        mmofe(m)    = 0.
+        mfuelmoist(m) = 0.
+        mIR(m)      =0.
+        mROS(m)     =0.
         
+
         do dm = 1,ndaymonth(m)
 
-          call spitfire(year,i,j,d,in,met_out(d),dw1(d),snowpack(d),dphen(d,:),wscal_v(d,:),osv,spinup,avg_cont_area,burnedf20,forager_pd20,FDI,omega_o0,omega0,BBpft,Ab,hclass,numfires_nat,ieff)
+          call spitfire(year,i,j,d,in,met_out(d),dw1(d),snowpack(d),dphen(d,:),wscal_v(d,:),osv,spinup,avg_cont_area,burnedf20,forager_pd20,FDI,omega_o0,omega0,BBpft,Ab,hclass,numfires_nat,ieff,hofc,mofe,IR,ROSfsurface)
           mBBpft(:,m) = mBBpft(:,m) + BBpft  !accumulate biomass burned totals
 
           mburnedf(m) = mburnedf(m) + Ab/(in%cellarea * 1e-4) !convert cell area to ha, as Ab is in ha
 
+        
           if (numfires_nat <0) then
            numfires_nat = 0
-          end if  
+          end if 
+ 
           mnfire(m)   = mnfire(m) + numfires_nat
 
           if (ieff <0) then
            ieff = 0
           end if
+
+          if(IR < 0) then
+           IR = 0
+          end if
+
+          if(ROSfsurface <0) then
+           ROSfsurface = 0
+          end if
+
           mieff(m)    = mieff(m) + (ieff/ndaymonth(m))
+          mhofc(m)    = mhofc(m) + (hofc/ndaymonth(m))
+          mmofe(m)    = mmofe(m) + (mofe/ndaymonth(m))
+          mfuelmoist(m) = mfuelmoist(m) + (omega_o0/ndaymonth(m))
+          mIR(m)      = mIR(m) + (IR/ndaymonth(m))
+          mROS(m)     = mROS(m) + (ROSfsurface/ndaymonth(m))
 
           d = d + 1
 
-        end do
-      end do
-      
+       end do
+   end do
+
 
       !add the agricultural burned biomass to the total burned biomass, by PFT
 
@@ -1259,12 +1303,23 @@ end do  !sub-grid tile loop
 allocate(help_me(ntiles,12))
 allocate(help_me2(ntiles,12))
 allocate(help_me3(ntiles,12))
+allocate(help_me4(ntiles,12))
+allocate(help_me5(ntiles,12))
+allocate(help_me6(ntiles,12))
+allocate(help_me7(ntiles,12))
+allocate(help_me8(ntiles,12))
+
 
 do i = 1, ntiles
 !  write(stdout,'(i8,13f14.7)') i, osv%tile(i)%mburnedf, osv%tile(i)%coverfrac
   help_me(i,:) = osv%tile(i)%mburnedf * osv%tile(i)%coverfrac
   help_me2(i,:) = osv%tile(i)%mnfire
   help_me3(i,:) = osv%tile(i)%mieff
+  help_me4(i,:) = osv%tile(i)%mhofc
+  help_me5(i,:) = osv%tile(i)%mmofe
+  help_me6(i,:) = osv%tile(i)%mfuelmoist
+  help_me7(i,:) = osv%tile(i)%mIR
+  help_me8(i,:) = osv%tile(i)%mROS
 end do
 
 !to make it easier in netcdfoutputmod, and since we are only interested in the total, not tilewise, already do the tile-integration here and then put it 
@@ -1273,12 +1328,20 @@ end do
 osv%tile(1)%mburnedf = sum(help_me(:,:), dim=1)
 osv%tile(1)%mnfire   = sum(help_me2(:,:), dim=1)
 osv%tile(1)%mieff    = sum(help_me3(:,:), dim=1)
+osv%tile(1)%mhofc    = sum(help_me4(:,:), dim=1)
+osv%tile(1)%mmofe    = sum(help_me5(:,:), dim=1)
+osv%tile(1)%mfuelmoist = sum(help_me6(:,:), dim=1)
+osv%tile(1)%mIR      = sum(help_me7(:,:), dim=1)
+osv%tile(1)%mROS     = sum(help_me8(:,:), dim=1)
 
 !write(stdout,'(a,12f14.7)') 'integrated', osv%tile(1)%mburnedf
 
 deallocate(help_me)
 deallocate(help_me2)
 deallocate(help_me3)
+deallocate(help_me6)
+deallocate(help_me7)
+deallocate(help_me8)
 
 end subroutine lpjcore
 

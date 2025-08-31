@@ -25,8 +25,11 @@ FCFLAGS = -debug -fpe0 -traceback -g -check -check noarg_temp_created # -warn al
 #---------------------------------------------
 # specify the location of your netcdf install
 
-# netcdf=/alcc/gpfs2/home/geo/georwa/local
-netcdf=/alcc/gpfs2/home/geo/georwa/local
+#netcdf=/alcc/gpfs2/home/geo/georwa/local
+netcdf=/home/rayvit/local/netcdf-fortran-4.5.0
+#netcdf = /home/rayvit/tools/software/netCDF/4.6.1-intel-2018b
+
+
 
 #---- should not need to change anything below this line ----
 

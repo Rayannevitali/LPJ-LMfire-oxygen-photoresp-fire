@@ -31,6 +31,7 @@ integer, parameter :: stderr = error_unit
 
 integer, parameter :: npft     =  9 
 integer, parameter :: npftpar  = 53
+integer, parameter :: numcell  = 259200
 integer, parameter :: nsoilpar =  7
 integer, parameter :: ncvar    =  3
 integer, parameter :: climbuf  = 20
@@ -154,8 +155,10 @@ real(dp), parameter :: z0mg  = 0.01d0   !momentum roughness length for soil (m, 
 real(sp), parameter :: O2 = 20.95   !concentration of atmospheric oxygen
 
 logical :: PoI = .true.          !Turn on probability of ignition eqn 
-logical :: MoE = .false.           !Turn on Moisture of Extinction eqn
-logical :: HoC = .false.          !Turn on Heat of Combustion eqn
+logical :: MoE = .true.          !Turn on Moisture of Extinction eqn
+logical :: HoC = .true.          !Turn on Heat of Combustion eqn
+
+logical :: O2_photo = .true.    !Turn on oxygen effects on photosyntehsis 
 
 !other parameters
 

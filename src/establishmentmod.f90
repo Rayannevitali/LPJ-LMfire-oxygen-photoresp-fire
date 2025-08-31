@@ -1,6 +1,7 @@
 module establishmentmod
 
 use parametersmod, only : sp
+use parametersmod, only : stdout
 
 implicit none
 
@@ -143,6 +144,7 @@ do pft = 1,npft
     else
       nind(pft) = 1.    !each grass PFT = 1 "individual"
     end if
+
 
     fpc_grid(pft) = 0.
 

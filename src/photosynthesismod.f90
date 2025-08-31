@@ -10,7 +10,7 @@ contains
 
 subroutine photosynthesis(ca,temp,fpar,par,dayl,c4,lambda,rd,agd,adtmm,x1,x2,x3,x4,pfti)
 
-use parametersmod, only : sp,dp,npft,npftpar,ncvar,pftpar
+use parametersmod, only : sp,dp,npft,npftpar,ncvar,pftpar,O2,O2_photo,stdout
 
 implicit none
 
@@ -31,7 +31,7 @@ real(sp), parameter :: lambdamc4 =    0.4     ! optimal ci:ca ratio for c4 plant
 real(sp), parameter :: m         =   25.      ! corresponds to parameter p in Eqn 28, Haxeltine & Prentice 1996
 real(sp), parameter :: n0        =    7.15    ! leaf N concentration (mg/g) not involved in photosynthesis
 real(sp), parameter :: p         =    1.e5    ! atmospheric pressure (Pa)
-real(sp), parameter :: po2       =   20.9e3   ! O2 partial pressure (Pa)
+real(sp), parameter :: po2       =   20.9     ! O2 partial pressure (Pa)
 real(sp), parameter :: q10kc     =    2.1     ! q10 for temperature-sensitive parameter kc
 real(sp), parameter :: q10ko     =    1.2     ! q10 for temperature-sensitive parameter ko
 real(sp), parameter :: q10tau    =    0.57    ! q10 for temperature-sensitive parameter tau
@@ -42,6 +42,8 @@ real(sp), parameter :: theta     =    0.7     ! colimitation (shape) parameter
 real(sp), parameter :: tk25      =  298.15    ! 25 deg C in Kelvin
 real(sp), parameter :: tmc3      =   45.      ! maximum temperature for C3 photosynthesis
 real(sp), parameter :: tmc4      =   55.      ! maximum temperature for C4 photosynthesis
+
+CHARACTER(LEN=*), parameter :: comp = "andre" ! set how O2 effects on compensation points are calculated from: standard, nisbet or andre
 
 ! arguments
 
@@ -89,10 +91,21 @@ real(sp) :: t0
 real(sp) :: tau
 real(sp) :: tstress
 real(sp) :: vm
+real(sp) :: Ox
+real(sp) :: ogammastar
+real(sp) :: o2gam
 
 ! ----------------------------------------------------------------------------------------------------
 
 lambdam = pftpar(pfti,26) 
+
+! set the atmopsheric oxygen (% vol.) based on whether O2 effects are switched
+! on
+if (.not.O2_photo) then
+Ox = po2
+else
+Ox = O2
+end if 
 
 ! Return without performing calculations if daylength too short
 
@@ -163,18 +176,33 @@ else  ! C3 photosynthesis
 
   ko  = ko25  *  q10ko**((temp - 25.) / 10.)  !Michaelis constant of rubisco for O2
   kc  = kc25  *  q10kc**((temp - 25.) / 10.)  !Michaelis constant for CO2
-  tau = tau25 * q10tau**((temp - 25.) / 10.)  !CO2/O2 specificity ratio
 
-  ! CO2 compensation point (CO2 partial pressure, Pa) Eqn 8, Haxeltine & Prentice 1996
-
-  gammastar = po2 / (2. * tau)
- 
   ! Convert ambient CO2 level, ca, from mole fraction to partial pressure (Pa)
 
-  !write(0,*) 'CO2 in photosynthesis: ', ca * 1e6
-  !stop
-
   pa = ca * p
+
+  ! calculate the CO2/O2 specificity ratio and then compensation points:
+  if (.not. O2_photo .or. comp /= "andre") then
+
+        ! standard model setup from Haxeltine & Prentice 1996a
+        tau = tau25 * q10tau**((temp - 25.) / 10.)   
+        
+        ! CO2 compensation point(CO2 partial pressure, Pa) Eqn 8, Haxeltine & Prentice 1996
+        gammastar = (Ox*1e3) / (2. * tau)            
+        
+        ! for simulation following Nisbet et. al (2007) a seperate O2 compensation point is calculated
+        if (comp == "nisbet") then
+                ogammastar = ((0.0246*pa*10) + 17.94)  ! eqn from Nisbet et. al (2007) output is O2 (%)
+                o2gam =  ((-1*Ox)/ogammastar)**(3)+1   ! scale output
+                if(ogammastar - Ox < 0) then           ! set to zero for calculations if negative
+                        o2gam = 0
+                end if
+        end if
+  else
+        tau = 0.132* q10tau**((temp - 25.) / 10.)    ! using average specificity taken from Andre (2011a) given in %/ppm
+        gammastar = ((2./3.)*(Ox/tau))*0.101325        ! taken from Andre (2011a) eqn 12 with R=0.1E assumed gives CO2 in Pa
+
+  end if
 
   ! Non-water-stressed intercellular CO2 partial pressure (Pa); Eqn 7, Haxeltine & Prentice 1996
 
@@ -200,8 +228,7 @@ else  ! C3 photosynthesis
   if (temp  > tmc3) c1 = 0.
 
   ! Calculation of C2C3, Eqn 6, Haxeltine & Prentice 1996
-
-  c2 = (pi - gammastar) / (pi + kc * (1. + po2 / ko))
+  c2 = (pi - gammastar) / (pi + kc * (1. + (Ox*1e3) / ko))
 
   b  = bc3   !Choose C3 value of b for Eqn 10, Haxeltine & Prentice 1996
   t0 = t0c3  !base temperature for temperature response of rubisco
@@ -235,8 +262,11 @@ if (.not.c4) then  !C3 photosynthesis
 
   if (temp > tmc3) c1 = 0.  !high-temperature inhibition
 
-  c2 = (pi - gammastar) / (pi + kc * (1. + po2 / ko))
-
+  if ( O2_photo .and. comp == "nisbet") then
+        c2 = ((pi - gammastar)*O2gam) / (pi + kc * (1. + (Ox*1e3) / ko))  ! Include O2 compensation point
+  else
+        c2 = (pi - gammastar) / (pi + kc * (1. + (Ox*1e3) / ko))          ! Following Haxeltine & Prentice 1996
+  end if
 else  !C4 photosynthesis
 
   ! Parameter accounting for effect of reduced intercellular CO2 concentration on photosynthesis, Phipi

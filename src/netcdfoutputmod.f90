@@ -18,6 +18,8 @@ contains
 
 subroutine netcdf_output(ncells,tpos,year,sv,in_master)
 
+use parametersmod, only : stdout,stderr
+
 use typesizes
 use netcdf
 use errormod, only : ncstat,netcdf_err
@@ -74,6 +76,7 @@ ntiles = count(in_master(1)%human%landuse >=0.)
 do i = 1,ncells
   rvar1d(i) = in_master(i)%landf
 end do
+
 
 call putvar2d(ofid,tpos,'landf',rvar1d)
 
@@ -440,6 +443,63 @@ deallocate(rvar2d)
 !-----
 
 !-----
+!monthly average reaction intensiy
+
+y = size(sv(1)%tile(1)%mIR)        !ATTENTION: tile integration hasalready been done at end of lpjmod and put in tile 1, hence we only need tooutput tile1 for the integrated
+
+allocate(rvar2d(ncells,y))
+
+do i = 1,ncells
+  do j = 1,12
+    rvar2d(i,j) = sv(i)%tile(1)%mIR(j)
+  end do
+end do
+
+call putvar3d(ofid,tpos,'mIR',rvar2d)
+
+deallocate(rvar2d)
+
+!-----
+
+!-----
+!monthly average rate of spread
+
+y = size(sv(1)%tile(1)%mROS)        !ATTENTION: tile integration has already been done at end of lpjmod and put in tile 1, hence we only need to output tile1 for the integrated
+
+allocate(rvar2d(ncells,y))
+
+do i = 1,ncells
+  do j = 1,12
+    rvar2d(i,j) = sv(i)%tile(1)%mROS(j)
+  end do
+end do
+
+call putvar3d(ofid,tpos,'mROS',rvar2d)
+
+deallocate(rvar2d)
+
+!-----
+
+!-----
+!monthly average fuel moisture
+
+y = size(sv(1)%tile(1)%mfuelmoist)        !ATTENTION: tile integration has already been done at end of lpjmod and put in tile 1, hence we only need to output tile1 for the integrated
+
+allocate(rvar2d(ncells,y))
+
+do i = 1,ncells
+  do j = 1,12
+    rvar2d(i,j) = sv(i)%tile(1)%mfuelmoist(j)
+  end do
+end do
+
+call putvar3d(ofid,tpos,'mfuelmoist',rvar2d)
+
+deallocate(rvar2d)
+
+!-----
+
+!-----
 !monthly average igntiion efficiency in grid cell                                                                                                                                                                              
 y = size(sv(1)%tile(1)%mieff)        !ATTENTION: tile integration has already been done at end of lpjmod and put in tile 1, hence we only need to output tile1 for the integrated
 
@@ -452,6 +512,40 @@ end do
 end do
 
 call putvar3d(ofid,tpos,'mieff',rvar2d)                                                                                                                                                                           
+deallocate(rvar2d)
+
+!-----
+
+!-----
+!monthly average heat of combustion
+y = size(sv(1)%tile(1)%mhofc)        !ATTENTION: tile integration has already been done at end of lpjmod and put in tile 1, hence we only need to output tile1 for the integrated
+
+allocate(rvar2d(ncells,y))
+
+do i = 1,ncells
+  do j = 1,12
+    rvar2d(i,j) = sv(i)%tile(1)%mhofc(j)
+end do
+end do
+
+call putvar3d(ofid,tpos,'mhofc',rvar2d)
+deallocate(rvar2d)
+
+!-----
+
+!-----
+!monthly average moisture of extinction 
+y = size(sv(1)%tile(1)%mmofe)        !ATTENTION: tile integration has already been done at end of lpjmod and put in tile 1, hence we only need to output tile1 for the integrated
+
+allocate(rvar2d(ncells,y))
+
+do i = 1,ncells
+  do j = 1,12
+    rvar2d(i,j) = sv(i)%tile(1)%mmofe(j)
+end do
+end do
+
+call putvar3d(ofid,tpos,'mmofe',rvar2d)
 deallocate(rvar2d)
 
 !-----

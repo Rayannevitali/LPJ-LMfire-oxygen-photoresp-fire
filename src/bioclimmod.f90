@@ -139,9 +139,11 @@ elsewhere
 
 end where
 
+!if (ntiles == 143394) then
 !do i = 1,pfts
 !  write(stdout,*)i,tcmin(i),tcmax(i),gddmin(i),twmax(i),gdd,mtemp_min20,mtemp_max,survive(i),estab(i)
 !end do
+!end if 
 
 end subroutine bioclim
 
